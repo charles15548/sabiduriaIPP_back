@@ -1,0 +1,8 @@
+
+MODELO = "gpt-4.1"
+MODELO_MINI = "gpt-4.1-mini"
+MODELO_TRANSCRIBE = "gpt-4o-mini-transcribe"
+MODELO_TEXTO_AUDIO = "gpt-4o-mini-tts"
+CHUNCKS_POR_LIBRO = 5
+OVERLAP = 5
+CHUNK_LIBRO = 250

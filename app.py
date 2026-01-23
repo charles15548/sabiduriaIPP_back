@@ -2,7 +2,8 @@ from script.controllers.personas import login
 
 from fastapi import FastAPI, HTTPException,Form,File,Body,UploadFile
 from fastapi.responses import JSONResponse
-
+from script.controllers.libro import subirLibro
+from script.lmm.embeddings.subir_libro import extraer_texto
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
@@ -34,6 +35,17 @@ contrasena: str = Form(...),
 ):
     user = login(correo,contrasena)
     return user
+
+
+@app.post("/subir-libro")
+async def subir_documento(
+    id_persona: str = Form(...),
+    nombreLibro:str = Form(...),
+    contenido: UploadFile=File(...)
+):
+    texto_puro = await extraer_texto(contenido)
+    subirLibro(id_persona,nombreLibro,texto_puro)
+    return {"message": f"Libro {nombreLibro} insertado correctamente ✅"}   
 
 
 
