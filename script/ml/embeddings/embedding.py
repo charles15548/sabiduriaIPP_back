@@ -3,7 +3,10 @@ import numpy as np
 from dotenv import load_dotenv
 from openai import OpenAI
 import re
-from variables_globales import CHUNK_LIBRO, OVERLAP
+from script.ml.variables_globales import CHUNK_LIBRO, OVERLAP
+
+
+
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))

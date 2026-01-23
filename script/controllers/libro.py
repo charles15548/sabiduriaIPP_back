@@ -3,7 +3,7 @@ from sqlalchemy import create_engine,text
 from dotenv import load_dotenv
 import numpy as np
 
-from script.lmm.embeddings.embedding import dividir_en_chunks,limpiar_texto,generar_embedding
+from script.ml.embeddings.embedding import dividir_en_chunks,limpiar_texto,generar_embedding
 
 load_dotenv()
 
@@ -15,6 +15,7 @@ engine = create_engine(DATABASE_URL,
 
 def subirLibro(nombre_libro, contenido):
     chunks = dividir_en_chunks(contenido)
+    chunk_limpio = limpiar_texto(texto)
 
     with engine.begin() as conn:
         resultBook = conn.execute(
@@ -36,7 +37,7 @@ def subirLibro(nombre_libro, contenido):
         """)
 
         for texto in chunks:
-            chunk_limpio = limpiar_texto(texto)
+            
             embedding = generar_embedding(chunk_limpio)
 
             emb = np.array(embedding, dtype=np.float32)

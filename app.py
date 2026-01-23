@@ -3,7 +3,7 @@ from script.controllers.personas import login
 from fastapi import FastAPI, HTTPException,Form,File,Body,UploadFile
 from fastapi.responses import JSONResponse
 from script.controllers.libro import subirLibro
-from script.lmm.embeddings.subir_libro import extraer_texto
+from script.ml.embeddings.subir_libro import extraer_texto
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
