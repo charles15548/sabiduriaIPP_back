@@ -97,3 +97,36 @@ def _insertar_lote_embeddings(lote: list[dict]):
 
             
             
+def listar_libros():
+    with engine.begin() as conn:
+        result = conn.execute(
+            text("""
+                SELECT id, libro
+                FROM libros
+                ORDER BY id DESC
+            """)
+        ).fetchall()
+
+    return [
+        {
+            "id": r.id,
+            "nombre_libro": r.libro
+        }
+        for r in result
+    ]
+
+
+
+def eliminar_libro(id_libro: int) -> bool:
+    with engine.begin() as conn:
+        result = conn.execute(
+            text("""
+                DELETE FROM libros
+                WHERE id = :id_libro
+            """),
+            {"id_libro": id_libro}
+        )
+
+    return result.rowcount > 0
+
+

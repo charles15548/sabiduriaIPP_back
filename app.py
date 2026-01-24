@@ -3,6 +3,7 @@ from script.controllers.personas import login
 from fastapi import FastAPI, HTTPException,Form,File,Body,UploadFile
 from fastapi.responses import JSONResponse
 from script.ml.embeddings.subir_libro import procesarSubida
+from script.controllers.libro import eliminar_libro, listar_libros
 from script.ml.response import response_stream
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
@@ -85,6 +86,48 @@ async def subir_documento(
         }
     
     
+
+@app.get("/libros")
+def obtener_libros():
+    try:
+        libros = listar_libros()
+        return {
+            "total": len(libros),
+            "libros": libros
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail="Error al obtener la lista de libros"
+        )
+@app.delete("/libros/{id_libro}")
+def borrar_libro(id_libro: int):
+    try:
+        eliminado = eliminar_libro(id_libro)
+
+        if not eliminado:
+            raise HTTPException(
+                status_code=404,
+                detail="Libro no encontrado"
+            )
+
+        return {
+            "message": f"Libro con id {id_libro} eliminado correctamente ✅"
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail="Error al eliminar el libro"
+        )
+
 
 
 
