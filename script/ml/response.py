@@ -5,6 +5,7 @@ import os
 from script.ml.variables_globales import MODELO,CHUNCKS_POR_LIBRO,MODELO_MINI
 from script.ml.embeddings.select_chunks import select_chunck
 from script.ml.gpt.prompt import prompt_base
+from script.controllers.libro import obtener_listado
 import re
 # Cargar clave desde .env
 load_dotenv()
@@ -22,6 +23,8 @@ def response_stream(pregunta_usuario, historial):
 
     print(contexto)
     prompt = prompt_base()
+    archivos_existentes = obtener_listado()
+    
 
     if chunks == []:
         mensajes = [
@@ -36,13 +39,25 @@ def response_stream(pregunta_usuario, historial):
         mensajes = [
             {
                 "role": "system",
-                "content": prompt  + f"\nGUIATE DE LA SIGUIENTE INFORMACIÓN: \n{contexto}"
-            }
+             "content": (
+                prompt
+                + "\n\nLISTA DE LIBROS EN BD:\n"
+                + "\n".join(archivos_existentes)
+                + "\n\nINFORMACIÓN ENCONTRADA:\n"
+                + contexto
+            )
+               }
         ]
-    mensajes.extend({
-         "role": "user" if msg.rol == "user" else "assistant",
+    mensajes.extend([
+    {
+        "role": "user" if msg.rol == "user" else "assistant",
         "content": msg.contenido
-    } for msg in historial)
+    }
+    for msg in historial
+])
+    
+    print(mensajes)
+
 
     def event_generator():
         with client.chat.completions.stream(model=MODELO, messages=mensajes) as stream:

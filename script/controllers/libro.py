@@ -51,12 +51,12 @@ def subirLibro(nombre_libro, paginas):
                 if embedding is None:
                     continue
 
-                emb = np.array(embedding, dtype=np.float32)
+                #emb = np.array(embedding, dtype=np.float32)
 
                 lote.append({
                     "id_libro": bookId,
                     "contenido": chunk_limpio,
-                    "embedding": emb.tolist(),
+                    "embedding": embedding.tolist(),
                     "pagina": num_pag
                 })
                 total_chunks +=1
@@ -87,9 +87,9 @@ def _insertar_lote_embeddings(lote: list[dict]):
         conn.execute(
             text("""
                 INSERT INTO document_chunks
-                    (id_libro,contenido, embedding, pagina)
+                    (id_libro, contenido, embedding, pagina)
                 VALUES
-                    (:id_libro,:contenido, :embedding, :pagina)
+                    (:id_libro, :contenido, (:embedding)::vector, :pagina)
             """),
             lote
         )
@@ -130,3 +130,14 @@ def eliminar_libro(id_libro: int) -> bool:
     return result.rowcount > 0
 
 
+def obtener_listado():
+    try:
+        with engine.begin() as conn:
+            result = conn.execute(
+                text("SELECT libro FROM libros ORDER BY id ASC")
+            ).fetchall()
+
+        return [r.libro for r in result]
+    except Exception as e:
+        print(f"❌ Error al obtener listado: {e}")
+        return []

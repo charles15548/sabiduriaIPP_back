@@ -12,9 +12,7 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
 
-
 def select_chunck(pregunta, cantidad_chunks):
-
     session = SessionLocal()
 
     try:
@@ -22,7 +20,6 @@ def select_chunck(pregunta, cantidad_chunks):
 
         if isinstance(embedding, np.ndarray):
             embedding = [float(x) for x in embedding]
-        vector_cero = [0.0]*1536
 
         query = text("""
             SELECT 
@@ -32,21 +29,23 @@ def select_chunck(pregunta, cantidad_chunks):
                 dc.pagina
             FROM document_chunks dc
             JOIN libros l ON l.id = dc.id_libro
-            WHERE (embedding <=> (:vector_cero)::vector) IS DISTINCT FROM 0
-              AND trim(coalesce(contenido, '')) <> ''    
-            ORDER BY embedding <=> (:pregunta)::vector
+            WHERE trim(coalesce(dc.contenido, '')) <> ''
+            ORDER BY dc.embedding <=> (:pregunta)::vector
             LIMIT :cantidad
         """)
 
         result = session.execute(
             query,
-            {"pregunta":embedding,
-             "cantidad":cantidad_chunks,
-             "vector_cero":vector_cero}
+            {
+                "pregunta": embedding,
+                "cantidad": cantidad_chunks
+            }
         ).fetchall()
+
         if not result:
             return []
-        chunks = [
+
+        return [
             {
                 "contenido": r.contenido,
                 "libro": r.nombre_libro,
@@ -55,10 +54,11 @@ def select_chunck(pregunta, cantidad_chunks):
             }
             for r in result
         ]
-        return chunks
+
     except Exception as e:
-        print(f"❌ Error en buscar_similares: {e}")
+        print(f"❌ Error en select_chunck: {e}")
         return []
+
     finally:
         session.close()
 
