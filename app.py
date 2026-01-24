@@ -2,15 +2,15 @@ from script.controllers.personas import login
 
 from fastapi import FastAPI, HTTPException,Form,File,Body,UploadFile
 from fastapi.responses import JSONResponse
-from script.controllers.libro import subirLibro
-from script.ml.embeddings.subir_libro import extraer_texto
+from script.ml.embeddings.subir_libro import procesarSubida
+from script.ml.response import response_stream
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-
-
+from typing import List,Literal
+from pydantic import BaseModel
+from fastapi.responses import StreamingResponse
 
 from dotenv import load_dotenv
-import os
 load_dotenv()
 app = FastAPI(title="API RAG")
 
@@ -28,6 +28,37 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+class Mensaje(BaseModel):
+    rol: Literal["user","bot"]
+    contenido: str
+
+class PreguntaEntrada(BaseModel):
+    pregunta: str
+    historial: List[Mensaje]
+
+
+
+@app.post("/consultar-stream")
+def consultar_stream(pregunta_entrada: PreguntaEntrada):
+    try:
+        
+        pregunta = pregunta_entrada.pregunta
+        historial = pregunta_entrada.historial
+
+        response = response_stream(pregunta,historial)
+
+        return StreamingResponse(response(), media_type="text/event-stream")
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+
+
+
+
 @app.post("/acceso")
 async def log(
 correo: str = Form(...),
@@ -39,14 +70,21 @@ contrasena: str = Form(...),
 
 @app.post("/subir-libro")
 async def subir_documento(
-    id_persona: str = Form(...),
     nombreLibro:str = Form(...),
     contenido: UploadFile=File(...)
 ):
-    texto_puro = await extraer_texto(contenido)
-    subirLibro(id_persona,nombreLibro,texto_puro)
-    return {"message": f"Libro {nombreLibro} insertado correctamente ✅"}   
+    try:
+        procesarSubida(nombreLibro, contenido)
+        
+        return {"message": f"Libro {nombreLibro} insertado correctamente ✅"}   
 
+    except Exception as e:
+        print(e)
+        return {
+            "error": "Error al insertar el libro ❌"
+        }
+    
+    
 
 
 

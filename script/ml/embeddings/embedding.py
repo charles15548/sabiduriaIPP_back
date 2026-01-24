@@ -11,13 +11,16 @@ from script.ml.variables_globales import CHUNK_LIBRO, OVERLAP
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def generar_embedding(texto: str) -> np.ndarray:
-    response = client.embeddings.create(
-        model="text-embedding-3-small",
-        input=texto
-    )
-    return np.array(response.data[0].embedding, dtype="float32")
-
+def generar_embedding(texto: str) -> np.ndarray | None:
+    try:
+        response = client.embeddings.create(
+            model="text-embedding-3-small",
+            input=texto
+        )
+        return np.array(response.data[0].embedding, dtype="float32")
+    except Exception as e:
+        print(f"❌ Error generando embedding: {e}")
+        return None
 
 
 def limpiar_texto(texto: str) -> str:

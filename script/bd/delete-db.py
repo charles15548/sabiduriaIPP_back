@@ -9,7 +9,7 @@ engine = create_engine(DATABASE_URL)
 
 def drop_tables():
     with engine.connect() as conn:
-        conn.execute(text("DROP TABLE IF EXISTS persona CASCADE;"))
+        conn.execute(text("DROP TABLE IF EXISTS persona CASCADE; DROP TABLE IF EXISTS libros CASCADE; DROP TABLE IF EXISTS document_chunks CASCADE;"))
         conn.commit()
         print("🗑️ Tablas eliminada correctamente.")
 

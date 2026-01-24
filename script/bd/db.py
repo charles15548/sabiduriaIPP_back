@@ -32,6 +32,7 @@ class DocumentChunks(Base):
     id_libro = Column(Integer,ForeignKey("libros.id", ondelete="CASCADE"),nullable=False)
     contenido = Column(Text, nullable=False)
     embedding = Column(Vector(1536), nullable=False)
+    pagina = Column(Text, nullable=False)
     libros = relationship("Libros", back_populates="document_chunks")
 
 
