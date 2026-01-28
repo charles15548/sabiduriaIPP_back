@@ -13,7 +13,7 @@ engine = create_engine(DATABASE_URL,
                        connect_args={"sslmode": "require"})
 
 
-def subirLibro(nombre_libro, paginas):
+def subirLibro(nombre_libro, paginas, capitulos):
     
        
 
@@ -29,6 +29,22 @@ def subirLibro(nombre_libro, paginas):
                 }
             )
             bookId = resultBook.scalar()
+
+            if capitulos:
+                conn.execute(
+                    text("""
+                        INSERT INTO capitulos (id_libro, titulo)
+                        VALUES (:id_libro, :titulo)
+
+                    """),
+                    [
+                        {
+                        "id_libro": bookId,
+                        "titulo": c["titulo"]
+                        }
+                        for c in capitulos
+                    ]
+                )
 
 
         TAMAÑO_LOTE = 40
@@ -82,7 +98,7 @@ def subirLibro(nombre_libro, paginas):
 
 
     
-def _insertar_lote_embeddings(lote: list[dict]):
+def _insertar_lote_embeddings(lote):
     with engine.begin() as conn:
         conn.execute(
             text("""
@@ -141,3 +157,43 @@ def obtener_listado():
     except Exception as e:
         print(f"❌ Error al obtener listado: {e}")
         return []
+    
+
+def obtener_listado_libros_con_capitulos():
+    try:
+        with engine.begin() as conn:
+            result = conn.execute(
+                text("""
+                    SELECT 
+                        l.id,
+                        l.libro,
+                        c.titulo
+                    FROM libros l
+                    LEFT JOIN capitulos c ON c.id_libro = l.id
+                    ORDER BY l.id
+                """)
+            ).fetchall()
+
+        libros = {}
+        for r in result:
+            if r.libro not in libros:
+                libros[r.libro] = []
+            if r.titulo:
+                libros[r.libro].append(r.titulo)
+
+        return libros
+
+    except Exception as e:
+        print(f"❌ Error listado libros-capítulos: {e}")
+        return {}
+
+
+def formatear_listado_libros(libros_dict):
+    salida = []
+    for libro, capitulos in libros_dict.items():
+        salida.append(f"📘 {libro}")
+        for  cap in capitulos:
+            salida.append(f"- {cap}")
+        salida.append("")  # línea en blanco
+    return "\n".join(salida)
+

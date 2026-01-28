@@ -25,11 +25,29 @@ class Libros(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     libro = Column(Text,nullable=False)
     document_chunks = relationship("DocumentChunks",back_populates="libros", cascade="all, delete-orphan")
+    capitulos = relationship(
+        "Capitulos",
+        back_populates="libro",
+        cascade="all, delete-orphan"
+    )
+class Capitulos(Base):
+    __tablename__ = "capitulos"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    id_libro = Column(
+        Integer,
+        ForeignKey("libros.id", ondelete="CASCADE"),
+        nullable=False
+    )
+    titulo = Column(Text, nullable=False)
+    libro = relationship("Libros", back_populates="capitulos")
+
 
 class DocumentChunks(Base):
     __tablename__ = "document_chunks"
     id = Column(Integer, primary_key=True, autoincrement=True)
     id_libro = Column(Integer,ForeignKey("libros.id", ondelete="CASCADE"),nullable=False)
+    id_capitulo = Column(
+        Integer,ForeignKey("capitulos.id", ondelete="SET NULL"),nullable=True)
     contenido = Column(Text, nullable=False)
     embedding = Column(Vector(1536), nullable=False)
     pagina = Column(Text, nullable=False)

@@ -5,7 +5,7 @@ import os
 from script.ml.variables_globales import MODELO,CHUNCKS_POR_LIBRO,MODELO_MINI
 from script.ml.embeddings.select_chunks import select_chunck
 from script.ml.gpt.prompt import prompt_base
-from script.controllers.libro import obtener_listado
+from script.controllers.libro import obtener_listado,formatear_listado_libros,obtener_listado_libros_con_capitulos
 import re
 # Cargar clave desde .env
 load_dotenv()
@@ -17,13 +17,16 @@ client = OpenAI()
 
 
 def response_stream(pregunta_usuario, historial):
-    chunks = select_chunck(pregunta_usuario, CHUNCKS_POR_LIBRO)
+    chunks = select_chunck(pregunta_usuario,historial, CHUNCKS_POR_LIBRO)
 
     contexto = "\n\n".join([f"Fuente: {c['libro']}\n Página: {c['pagina']}  \nConocimiento:{c['contenido']}   " for c in chunks])
 
     print(contexto)
     prompt = prompt_base()
-    archivos_existentes = obtener_listado()
+
+    libros_con_capitulos = obtener_listado_libros_con_capitulos()
+    archivos_existentes = formatear_listado_libros(libros_con_capitulos)
+    print(archivos_existentes)
     
 
     if chunks == []:
@@ -41,7 +44,7 @@ def response_stream(pregunta_usuario, historial):
                 "role": "system",
              "content": (
                 prompt
-                + "\n\nLISTA DE LIBROS EN BD:\n"
+                + "\n\nLISTA DE LIBROS y capitulos EN BD:\n"
                 + "\n".join(archivos_existentes)
                 + "\n\nINFORMACIÓN ENCONTRADA:\n"
                 + contexto
@@ -55,8 +58,6 @@ def response_stream(pregunta_usuario, historial):
     }
     for msg in historial
 ])
-    
-    print(mensajes)
 
 
     def event_generator():

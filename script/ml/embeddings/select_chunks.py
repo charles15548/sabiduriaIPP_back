@@ -12,11 +12,30 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
 
-def select_chunck(pregunta, cantidad_chunks):
+def historial_a_texto(historial, max_mensajes = 6):
+    mensajes = historial[-max_mensajes:]
+
+    return "\n".join(
+        f"{'Usuario' if m.rol == 'user' else 'Asistente'}: {m.contenido}"
+        for m in mensajes
+    )
+
+def construir_query_embedding(pregunta_usuario, historial):
+    historial_texto = historial_a_texto(historial)
+    if historial_texto.strip():
+        return f"""
+            Contexto de la Conversación:
+            {historial_texto}
+            Pregunta actual:
+            {pregunta_usuario}
+        """
+    return pregunta_usuario
+def select_chunck(pregunta,historial, cantidad_chunks):
+    query_embedding = construir_query_embedding(pregunta, historial)
     session = SessionLocal()
 
     try:
-        embedding = generar_embedding(pregunta)
+        embedding = generar_embedding(query_embedding)
 
         if isinstance(embedding, np.ndarray):
             embedding = [float(x) for x in embedding]

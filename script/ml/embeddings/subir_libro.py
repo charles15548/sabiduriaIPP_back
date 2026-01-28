@@ -2,43 +2,41 @@ from pypdf import PdfReader
 from io import BytesIO
 from fastapi import UploadFile
 from script.controllers.libro import subirLibro
+from script.controllers.libro import formatear_listado_libros
 from docx import Document
 import os
 import fitz
 import re
 from fastapi import HTTPException
-from script.ml.variables_globales import MIN_TEXTO_POR_PAGINA
+from script.ml.variables_globales import MIN_TEXTO_POR_PAGINA,MODELO_CAPITULO
 
-async def extraer_texto(archivo: UploadFile) -> str:
-    filename = archivo.filename.lower()
+# async def extraer_texto(archivo: UploadFile) -> str:
+#     filename = archivo.filename.lower()
 
-    contenido = await archivo.read()
+#     contenido = await archivo.read()
 
-    # --- PDF ---
-    if filename.endswith(".pdf"):
+#     # --- PDF ---
+#     if filename.endswith(".pdf"):
         
-        reader = PdfReader(BytesIO(contenido))
-        texto_total = []
-        for page in reader.pages:
-            texto = page.extract_text()
-            if texto:
-                texto_total.append(texto)
+#         reader = PdfReader(BytesIO(contenido))
+#         texto_total = []
+#         for page in reader.pages:
+#             texto = page.extract_text()
+#             if texto:
+#                 texto_total.append(texto)
 
-        return "\n".join(texto_total)
-    elif filename.endswith(".docx"):
-        doc = Document(BytesIO(contenido))
-        texto_total = []
-        for para in doc.paragraphs:
-            if para.text.strip():
-                texto_total.append(para.text)
-        return "\n".join(texto_total)
-    else:
-        raise ValueError("Formato de archivo no soportado. Usa PDF o DOCX.")
+#         return "\n".join(texto_total)
+#     elif filename.endswith(".docx"):
+#         doc = Document(BytesIO(contenido))
+#         texto_total = []
+#         for para in doc.paragraphs:
+#             if para.text.strip():
+#                 texto_total.append(para.text)
+#         return "\n".join(texto_total)
+#     else:
+#         raise ValueError("Formato de archivo no soportado. Usa PDF o DOCX.")
 
-def limpiar_texto_pdf(texto: str) -> str:
-    if not texto:
-        return ""
-
+def limpiar_texto_rag(texto: str) -> str:
     # Eliminar NUL explícitamente (CRÍTICO)
     texto = texto.replace("\x00", "")
 
@@ -58,6 +56,15 @@ def contar_texto(texto: str) -> int:
         return 0
     return len(texto.strip())
 
+def limpiar_texto_estructural(texto: str) -> str:
+    if not texto:
+        return ""
+    texto = texto.replace("\x00", "")
+    texto = texto.replace("\r", "\n")
+    return texto
+
+
+
 
 def extraer_paginas_pdf(archivo) -> list:
     contenido = archivo.file.read()
@@ -67,7 +74,7 @@ def extraer_paginas_pdf(archivo) -> list:
 
     for page in doc:
         texto = page.get_text(sort=True)
-        texto_limpio = limpiar_texto_pdf(texto)
+        texto_limpio = limpiar_texto_estructural(texto)
 
         if not texto_limpio:
             continue
@@ -105,6 +112,72 @@ def extraer_paginas_word(archivo) -> list:
     archivo.file.seek(0)
     return paginas
 
+import openai
+from dotenv import load_dotenv
+import json
+from openai import OpenAI
+
+load_dotenv()
+openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI()
+
+def detectar_capitulos(paginas):
+    if not paginas:
+        return []
+    
+    paginas_recortadas = paginas[:30]
+
+    prompt = """
+Eres un analizador de libros.
+
+Recibirás una lista de páginas de un libro.
+Cada página tiene:
+- numero de página
+- texto completo
+
+Tu tarea es detectar los TÍTULOS DE CAPÍTULOS reales del libro.
+
+Reglas IMPORTANTES:
+- Solo detecta capítulos reales (Capítulo, Parte, Sección principal)
+- No detectes subtítulos menores
+- No inventes capítulos
+- Mantén el orden original del libro
+- Si no hay capítulos claros, devuelve una lista vacía
+
+Devuelve ÚNICAMENTE un JSON válido con esta estructura exacta:
+
+{
+  "capitulos": [
+    {
+      "titulo": "string"
+    }
+  ]
+}
+"""
+
+    response = client.chat.completions.create(
+        model=MODELO_CAPITULO, 
+        messages=[
+            {"role": "system", "content": prompt},
+            {
+                "role": "user",
+                "content": json.dumps({"paginas": paginas_recortadas}, ensure_ascii=False)
+            }
+        ]
+    )
+
+    contenido = response.choices[0].message.content
+
+    try:
+        data = json.loads(contenido)
+        return data.get("capitulos", [])
+    except json.JSONDecodeError:
+        print("❌ Error parseando JSON de capítulos")
+        return []
+
+
+
+
 
 def procesarSubida(nombreLibro, contenido):
 
@@ -116,8 +189,30 @@ def procesarSubida(nombreLibro, contenido):
     elif extension == ".docx":
         paginas = extraer_paginas_word(contenido)
     else:
-        return {"msg": "Formato no soportado"}
+        raise HTTPException(status_code=400, detail="Formato no soportado")
+    
+    texto_total = " ".join(p["texto"] for p in paginas)
+    if contar_texto(texto_total) < 200:
+
+        raise HTTPException(
+            status_code=400,
+            detail="No se pudo leer el libro. Parece que no contiene texto legible."
+        )
+
+    capitulos = detectar_capitulos(paginas)
+
+    print(f"""
+          ==========
+          {capitulos}
+          ==========""")
+
+    for p in paginas:
+        p["texto_rag"] = limpiar_texto_rag(p["texto"])
 
 
 
-    subirLibro(nombreLibro, paginas)
+    subirLibro(
+        nombre_libro=nombreLibro,
+        paginas=paginas,
+        capitulos=capitulos 
+    )

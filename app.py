@@ -76,15 +76,18 @@ async def subir_documento(
 ):
     try:
         procesarSubida(nombreLibro, contenido)
-        
-        return {"message": f"Libro {nombreLibro} insertado correctamente ✅"}   
+        return {"message": f"Libro {nombreLibro} insertado correctamente ✅"}
 
+    except HTTPException as e:
+        raise e
+        
+       
     except Exception as e:
         print(e)
-        return {
-            "error": "Error al insertar el libro ❌"
-        }
-    
+        raise HTTPException(
+            status_code=500,
+            detail="Error al insertar el libro ❌"
+        )
     
 
 @app.get("/libros")
