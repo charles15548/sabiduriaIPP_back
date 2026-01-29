@@ -1,12 +1,10 @@
-from sqlalchemy import create_engine, text
-from dotenv import load_dotenv
-load_dotenv()
-import os
-import numpy as np
-import jwt,datetime
-DATABASE_URL = os.getenv("DATABASE_URL")
+from sqlalchemy import  text
 
-engine = create_engine(DATABASE_URL)
+import jwt,datetime
+from script.bd.db import engine
+
+
+
 SECRET_KEY = "clave101"
 ALGORITHM = "HS256"
 

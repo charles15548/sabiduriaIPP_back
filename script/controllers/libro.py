@@ -1,16 +1,10 @@
-import os
-from sqlalchemy import create_engine,text
-from dotenv import load_dotenv
-import numpy as np
+
+from sqlalchemy import text
+
 
 from script.ml.embeddings.embedding import dividir_en_chunks,limpiar_texto,generar_embedding
 
-load_dotenv()
-
-
-DATABASE_URL=os.getenv("DATABASE_URL")
-engine = create_engine(DATABASE_URL,
-                       connect_args={"sslmode": "require"})
+from script.bd.db import engine
 
 
 def subirLibro(nombre_libro, paginas, capitulos):
