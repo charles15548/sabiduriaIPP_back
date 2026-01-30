@@ -30,6 +30,9 @@ def construir_query_embedding(pregunta_usuario, historial):
             {pregunta_usuario}
         """
     return pregunta_usuario
+
+
+
 def select_chunck(pregunta,historial, cantidad_chunks):
     query_embedding = construir_query_embedding(pregunta, historial)
     session = SessionLocal()
@@ -50,10 +53,14 @@ def select_chunck(pregunta,historial, cantidad_chunks):
                 dc.pagina
             FROM document_chunks dc
             JOIN libros l ON l.id = dc.id_libro
-            WHERE trim(coalesce(dc.contenido, '')) <> ''
+            WHERE 
+                dc.embedding  IS NOT NULL    
+                AND trim(coalesce(dc.contenido, '')) <> ''
             ORDER BY dc.embedding <=> (:pregunta)::vector
             LIMIT :cantidad
         """)
+
+        session.execute(text("SET ivfflat.probes = 10"))
 
         result = session.execute(
             query,

@@ -79,8 +79,31 @@ def init_db():
             ADD COLUMN IF NOT EXISTS tipo TEXT,
             ADD COLUMN IF NOT EXISTS tags TEXT;
         """))
-        conn.commit()
+
+     
+
+        conn.execute(text("""
+            CREATE INDEX IF NOT EXISTS document_chunks_id_libro_idx
+            ON document_chunks (id_libro);
+        """))
+
+        conn.execute(text("ANALYZE document_chunks;"))
+      
         print("✅ Columnas añadidas con éxito.")
+
+    autocommit_engine = engine.execution_options(
+        isolation_level="AUTOCOMMIT"
+    )
+
+    with autocommit_engine.connect() as conn:
+        conn.execute(text("""
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS document_chunks_embedding_ivfflat
+            ON document_chunks
+            USING ivfflat (embedding vector_cosine_ops)
+            WITH (lists = 400);
+        """))
+
+        print("✅ Índice vectorial ivfflat creado")
 
     Base.metadata.create_all(bind=engine)
 

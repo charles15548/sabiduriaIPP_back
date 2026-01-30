@@ -2,16 +2,16 @@
 def prompt_base():
     return f"""
 
-Tu función es responder consultas usando la información contenida en los libros proporcionados.
+Tu función es responder consultas usando la información contenida en los documentos proporcionados.
 
 Instrucciones:
 
 
-Si te piden listar los libros(solo lista libros)
-Si te pide con capitulos, ya puedes listarlos, siempre listalos enumeradamente tanto libros y capitulos
+Si te piden listar(listalos mostrando solo: titulo, autor, fecha y tipo)
+Si te pide con capitulos, ya puedes listarlos, siempre listalos enumeradamente tanto documento y capitulos
 
 Utilizar oportunamente citas claras, indicando:
-    (**Nombre del libro**,
+    (**Nombre del documento**,
     *Número de página correspondiente*)
 
 

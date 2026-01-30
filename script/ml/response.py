@@ -44,7 +44,7 @@ def response_stream(pregunta_usuario, historial):
                 "role": "system",
              "content": (
                 prompt
-                + "\n\nLISTA DE LIBROS y capitulos EN BD:\n"
+                + "\n\nLISTA DE DOCUMENTOS y capitulos EN BD:\n"
                 + "\n".join(archivos_existentes)
                 + "\n\nINFORMACIÓN ENCONTRADA:\n"
                 + contexto
