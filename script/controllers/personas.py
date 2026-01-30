@@ -56,9 +56,9 @@ def login(correo, contrasena):
 
 # if __name__ == "__main__":
 #     agregarPersona(
-#     nombre="admin",
-#     apellidos="admin",
-#     correo="admin@gmail.com",
-#     contrasena="admin",
+#     nombre="usuario",
+#     apellidos="usuario",
+#     correo="usuario@gmail.com",
+#     contrasena="usuario",
 #     foto=""
 #     )

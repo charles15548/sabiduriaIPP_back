@@ -179,7 +179,7 @@ Devuelve ÚNICAMENTE un JSON válido con esta estructura exacta:
 
 
 
-def procesarSubida(nombreLibro, contenido):
+def procesarSubida(nombreLibro, contenido,fecha, autor, tipo, tags):
 
     extension = os.path.splitext(contenido.filename)[1].lower()
 
@@ -212,7 +212,8 @@ def procesarSubida(nombreLibro, contenido):
 
 
     subirLibro(
-        nombre_libro=nombreLibro,
-        paginas=paginas,
-        capitulos=capitulos 
+        nombreLibro,
+        paginas,
+        capitulos,fecha, autor, tipo, tags
     )
+    return {"message": f"Libro {nombreLibro} insertado correctamente ✅"}

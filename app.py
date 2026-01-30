@@ -9,6 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from typing import List,Literal
 from pydantic import BaseModel
+import json
+
 from fastapi.responses import StreamingResponse
 
 from dotenv import load_dotenv
@@ -69,25 +71,6 @@ contrasena: str = Form(...),
     return user
 
 
-@app.post("/subir-libro")
-async def subir_documento(
-    nombreLibro:str = Form(...),
-    contenido: UploadFile=File(...)
-):
-    try:
-        procesarSubida(nombreLibro, contenido)
-        return {"message": f"Libro {nombreLibro} insertado correctamente ✅"}
-
-    except HTTPException as e:
-        raise e
-        
-       
-    except Exception as e:
-        print(e)
-        raise HTTPException(
-            status_code=500,
-            detail="Error al insertar el libro ❌"
-        )
     
 
 @app.get("/libros")
@@ -105,6 +88,64 @@ def obtener_libros():
             status_code=500,
             detail="Error al obtener la lista de libros"
         )
+
+
+@app.post("/subir-libro")
+async def subir_documento(
+    nombreLibro:str = Form(...),
+    contenido: UploadFile=File(...),
+    fecha: str = Form(...),
+    autor: str = Form(...),
+    tipo: str = Form(...),
+    tags: str = Form(...),
+
+):
+    try:
+        return procesarSubida(nombreLibro, contenido, fecha, autor, tipo, tags)
+
+    except HTTPException as e:
+        raise e
+        
+       
+    except Exception as e:
+        print(e)
+        raise HTTPException(
+            status_code=500,
+            detail="Error al insertar el libro ❌"
+        )
+
+# @app.post("/subir-libro")
+# async def subir_documento(
+#     nombreLibro: str = Form(...),
+#     contenido: UploadFile = File(...)
+# ):
+
+#     async def event_stream():
+#         try:
+#             yield json.dumps({"tipo": "info", "mensaje": "📘 Iniciando carga del libro"}) + "\n"
+
+#             for evento in procesarSubida(nombreLibro, contenido):
+#                 yield json.dumps(evento) + "\n"
+
+#             yield json.dumps({"tipo": "done", "mensaje": "✅ Libro insertado correctamente"}) + "\n"
+
+#         except Exception as e:
+#             yield json.dumps({"tipo": "error", "mensaje": str(e)}) + "\n"
+
+#     return StreamingResponse(event_stream(), media_type="text/plain")
+
+
+
+
+
+
+
+
+
+
+
+
+
 @app.delete("/libros/{id_libro}")
 def borrar_libro(id_libro: int):
     try:

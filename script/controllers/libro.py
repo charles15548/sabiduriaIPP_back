@@ -7,19 +7,23 @@ from script.ml.embeddings.embedding import dividir_en_chunks,limpiar_texto,gener
 from script.bd.db import engine
 
 
-def subirLibro(nombre_libro, paginas, capitulos):
+def subirLibro(nombre_libro, paginas, capitulos,fecha, autor, tipo, tags):
     
        
 
         with engine.begin() as conn:
             resultBook = conn.execute(
                 text("""
-                    INSERT INTO libros (libro)
-                    VALUES (:libro)
+                    INSERT INTO libros (libro,fecha, autor, tipo, tags)
+                    VALUES (:libro,:fecha, :autor, :tipo, :tags)
                     RETURNING id;
                 """),
                 {
                     "libro": nombre_libro,
+                    "fecha": fecha,
+                    "autor": autor,
+                    "tipo": tipo,
+                    "tags": tags
                 }
             )
             bookId = resultBook.scalar()
@@ -161,7 +165,11 @@ def obtener_listado_libros_con_capitulos():
                     SELECT 
                         l.id,
                         l.libro,
-                        c.titulo
+                        l.fecha,
+                        l.autor,
+                        l.tipo,
+                        l.tags,
+                        c.titulo AS capitulo
                     FROM libros l
                     LEFT JOIN capitulos c ON c.id_libro = l.id
                     ORDER BY l.id
@@ -170,10 +178,17 @@ def obtener_listado_libros_con_capitulos():
 
         libros = {}
         for r in result:
-            if r.libro not in libros:
-                libros[r.libro] = []
-            if r.titulo:
-                libros[r.libro].append(r.titulo)
+            if r.id not in libros:
+                libros[r.id] = {
+                    "libro": r.libro,
+                    "autor": r.autor,
+                    "fecha": r.fecha,
+                    "tipo": r.tipo,
+                    "tags": r.tags,
+                    "capitulos": []
+                }
+            if r.capitulo:
+                libros[r.id]["capitulos"].append(r.capitulo)
 
         return libros
 
@@ -184,10 +199,17 @@ def obtener_listado_libros_con_capitulos():
 
 def formatear_listado_libros(libros_dict):
     salida = []
-    for libro, capitulos in libros_dict.items():
-        salida.append(f"📘 {libro}")
-        for  cap in capitulos:
-            salida.append(f"- {cap}")
-        salida.append("")  # línea en blanco
+    for libro in libros_dict.values():
+        salida.append(f"📘 {libro['libro']}")
+        salida.append(
+             f"Autor: {libro['autor']} | "
+            f"Fecha: {libro['fecha']} | "
+            f"Tipo: {libro['tipo']}"
+        )
+        if libro['capitulos']:
+            for  cap in libro['capitulos']:
+                salida.append(f"- {cap}")
+        else:
+            salida.append("")  # línea en blanco
     return "\n".join(salida)
 

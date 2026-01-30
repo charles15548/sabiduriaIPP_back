@@ -44,6 +44,8 @@ def select_chunck(pregunta,historial, cantidad_chunks):
             SELECT 
                 dc.id_libro,
                 l.libro AS nombre_libro,
+                l.fecha,
+                l.autor,
                 dc.contenido,
                 dc.pagina
             FROM document_chunks dc
@@ -69,7 +71,10 @@ def select_chunck(pregunta,historial, cantidad_chunks):
                 "contenido": r.contenido,
                 "libro": r.nombre_libro,
                 "pagina": r.pagina,
-                "id_libro": r.id_libro
+                "id_libro": r.id_libro,
+                "fecha": r.fecha,
+                "autor": r.autor
+               
             }
             for r in result
         ]
