@@ -115,7 +115,7 @@ def listar_libros():
     with engine.begin() as conn:
         result = conn.execute(
             text("""
-                SELECT id, libro
+                SELECT id, libro, fecha, autor, tipo, tags
                 FROM libros
                 ORDER BY id DESC
             """)
@@ -124,7 +124,11 @@ def listar_libros():
     return [
         {
             "id": r.id,
-            "nombre_libro": r.libro
+            "nombre_libro": r.libro,
+            "fecha": r.fecha,
+            "autor": r.autor,
+            "tipo": r.tipo,
+            "tags": r.tags
         }
         for r in result
     ]
@@ -144,18 +148,6 @@ def eliminar_libro(id_libro: int) -> bool:
     return result.rowcount > 0
 
 
-def obtener_listado():
-    try:
-        with engine.begin() as conn:
-            result = conn.execute(
-                text("SELECT libro FROM libros ORDER BY id ASC")
-            ).fetchall()
-
-        return [r.libro for r in result]
-    except Exception as e:
-        print(f"❌ Error al obtener listado: {e}")
-        return []
-    
 
 def obtener_listado_libros_con_capitulos():
     try:

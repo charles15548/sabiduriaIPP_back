@@ -5,7 +5,7 @@ import os
 from script.ml.variables_globales import MODELO,CHUNCKS_POR_LIBRO,MODELO_MINI
 from script.ml.embeddings.select_chunks import select_chunck
 from script.ml.gpt.prompt import prompt_base
-from script.controllers.libro import obtener_listado,formatear_listado_libros,obtener_listado_libros_con_capitulos
+from script.controllers.libro import formatear_listado_libros,obtener_listado_libros_con_capitulos
 import re
 # Cargar clave desde .env
 load_dotenv()
