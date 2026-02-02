@@ -177,24 +177,40 @@ def borrar_libro(id_libro: int):
 
 
 import os
+import time
 @app.post("/disk/subir-manual")
 async def subir_manual(
     nombreLibro: str = Form(...),
     archivo: UploadFile = File(...)
 ):
-    extension = os.path.splitext(archivo.filename)[1]
+    try:
+        extension = os.path.splitext(archivo.filename)[1]
 
-    ruta = guardar_libro_en_disk(
-        nombreLibro,
-        archivo,
-        extension
-    )
+        if extension not in [".pdf", ".docx"]:
+            raise HTTPException(status_code=400, detail="Formato no permitido")
 
-    return {
-        "ok": True,
-        "ruta": ruta
-    }
+        # evitar sobrescribir
+        nombre_final = f"{nombreLibro}_{int(time.time())}"
 
+        ruta = guardar_libro_en_disk(
+            nombre_final,
+            archivo,
+            extension
+        )
+
+        return {
+            "ok": True,
+            "ruta": ruta
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(e)
+        raise HTTPException(
+            status_code=500,
+            detail="Error al subir archivo al disk"
+        )
 
 
 # Ejecutar: uvicorn app:app --reload

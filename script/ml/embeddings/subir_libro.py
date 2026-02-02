@@ -208,20 +208,68 @@ def guardar_libro_en_disk(
             detail="Error al guardar el libro en el disk ❌"
         )
 
-@app.post("/disk/subir-manual")
-async def subir_manual(
-    nombreLibro: str = Form(...),
-    archivo: UploadFile = File(...)
-):
-    extension = os.path.splitext(archivo.filename)[1]
 
-    ruta = guardar_libro_en_disk(
-        nombreLibro,
-        archivo,
-        extension
-    )
+def procesarSubida(nombreLibro, contenido,fecha, autor, tipo, tags):
 
-    return {
-        "ok": True,
-        "ruta": ruta
-    }
+
+    extension = os.path.splitext(contenido.filename)[1]
+    url_doc = None
+
+    try:
+        
+        url_doc = guardar_libro_en_disk(
+            nombreLibro, contenido,extension
+        )
+        print(f"Libro guardado en: {url_doc}")
+
+        
+
+
+        if extension == ".pdf":
+            paginas = extraer_paginas_pdf(contenido)
+        elif extension == ".docx":
+            paginas = extraer_paginas_word(contenido)
+        else:
+            raise HTTPException(status_code=400, detail="Formato no soportado")
+        
+        texto_total = " ".join(p["texto"] for p in paginas)
+        if contar_texto(texto_total) < 200:
+
+            raise HTTPException(
+                status_code=400,
+                detail="No se pudo leer el libro. Parece que no contiene texto legible."
+            )
+
+        capitulos = detectar_capitulos(paginas)
+
+        print(f"""
+            ==========
+            {capitulos}
+            ==========""")
+
+        for p in paginas:
+            p["texto_rag"] = limpiar_texto_rag(p["texto"])
+
+
+
+        subirLibro(
+            nombreLibro,
+            paginas,
+            capitulos,fecha, autor, tipo, tags,
+            url_doc
+        )
+        return {"message": f"Libro {nombreLibro} insertado correctamente ✅"}
+    except Exception as e:
+        if url_doc and os.path.exists(url_doc):
+            os.remove(url_doc)
+            print("Archivo eliminado correctamente")
+        print(e)
+        if isinstance(e, HTTPException):
+            raise e
+
+        raise HTTPException(
+            status_code=500,
+            detail="Error al procesar la subida del libro ❌"
+        )
+
+
