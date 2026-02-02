@@ -2,7 +2,7 @@ from script.controllers.personas import login
 
 from fastapi import FastAPI, HTTPException,Form,File,Body,UploadFile
 from fastapi.responses import JSONResponse
-from script.ml.embeddings.subir_libro import procesarSubida
+from script.ml.embeddings.subir_libro import procesarSubida, guardar_libro_en_disk
 from script.controllers.libro import eliminar_libro, listar_libros,descargar_libro_por_id
 from script.ml.response import response_stream
 from fastapi.middleware.cors import CORSMiddleware
@@ -175,6 +175,25 @@ def borrar_libro(id_libro: int):
             detail="Error al eliminar el libro"
         )
 
+
+import os
+@app.post("/disk/subir-manual")
+async def subir_manual(
+    nombreLibro: str = Form(...),
+    archivo: UploadFile = File(...)
+):
+    extension = os.path.splitext(archivo.filename)[1]
+
+    ruta = guardar_libro_en_disk(
+        nombreLibro,
+        archivo,
+        extension
+    )
+
+    return {
+        "ok": True,
+        "ruta": ruta
+    }
 
 
 
