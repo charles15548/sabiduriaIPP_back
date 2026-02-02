@@ -29,12 +29,12 @@ class Libros(Base):
     __tablename__ = "libros"
     id = Column(Integer, primary_key=True, autoincrement=True)
     libro = Column(Text,nullable=False)
-    # --- Nuevas columnas ---
+   
     fecha = Column(Text)
     autor = Column(Text)
     tipo = Column(Text)
     tags = Column(Text)
-    # -----------------------
+    url_doc = Column(Text)
 
     document_chunks = relationship("DocumentChunks",back_populates="libros", cascade="all, delete-orphan")
     capitulos = relationship(
@@ -69,15 +69,13 @@ class DocumentChunks(Base):
 
 
 def init_db():
+    Base.metadata.create_all(bind=engine)
     with engine.connect() as conn:
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
    
         conn.execute(text("""
             ALTER TABLE libros 
-            ADD COLUMN IF NOT EXISTS fecha TEXT,
-            ADD COLUMN IF NOT EXISTS autor TEXT,
-            ADD COLUMN IF NOT EXISTS tipo TEXT,
-            ADD COLUMN IF NOT EXISTS tags TEXT;
+            ADD COLUMN IF NOT EXISTS url_doc TEXT;
         """))
 
      
@@ -105,7 +103,7 @@ def init_db():
 
         print("✅ Índice vectorial ivfflat creado")
 
-    Base.metadata.create_all(bind=engine)
+   
 
     print("✅ Tablas creadas correctamente con pgvector.")
 

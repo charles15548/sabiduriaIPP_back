@@ -1,21 +1,23 @@
 
 from sqlalchemy import text
-
+from fastapi.responses import FileResponse
+from fastapi import HTTPException
+import os
 
 from script.ml.embeddings.embedding import dividir_en_chunks,limpiar_texto,generar_embedding
 
 from script.bd.db import engine
 
 
-def subirLibro(nombre_libro, paginas, capitulos,fecha, autor, tipo, tags):
+def subirLibro(nombre_libro, paginas, capitulos,fecha, autor, tipo, tags, url_doc):
     
        
 
         with engine.begin() as conn:
             resultBook = conn.execute(
                 text("""
-                    INSERT INTO libros (libro,fecha, autor, tipo, tags)
-                    VALUES (:libro,:fecha, :autor, :tipo, :tags)
+                    INSERT INTO libros (libro,fecha, autor, tipo, tags, url_doc)
+                    VALUES (:libro,:fecha, :autor, :tipo, :tags, :url_doc)
                     RETURNING id;
                 """),
                 {
@@ -23,7 +25,8 @@ def subirLibro(nombre_libro, paginas, capitulos,fecha, autor, tipo, tags):
                     "fecha": fecha,
                     "autor": autor,
                     "tipo": tipo,
-                    "tags": tags
+                    "tags": tags,
+                    "url_doc": url_doc
                 }
             )
             bookId = resultBook.scalar()
@@ -189,6 +192,8 @@ def obtener_listado_libros_con_capitulos():
         return {}
 
 
+
+
 def formatear_listado_libros(libros_dict):
     salida = []
     for libro in libros_dict.values():
@@ -205,3 +210,26 @@ def formatear_listado_libros(libros_dict):
             salida.append("")  # línea en blanco
     return "\n".join(salida)
 
+
+
+def descargar_libro_por_id(id_libro: int):
+    with engine.begin() as conn:
+        libro = conn.execute(
+            text("""
+                SELECT libro, url_doc
+                FROM libros
+                WHERE id = :id
+            """),
+            {"id": id_libro}
+        ).fetchone()
+    if not libro:
+        raise HTTPException(404, "Libro no encontrado")
+
+    if not libro.url_doc or not os.path.exists(libro.url_doc):
+        raise HTTPException(404, "Archivo no disponible")
+
+    return FileResponse(
+        path=libro.url_doc,
+        filename=os.path.basename(libro.url_doc),
+        media_type="application/octet-stream"
+    )

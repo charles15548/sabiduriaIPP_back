@@ -9,3 +9,4 @@ OVERLAP = 5
 CHUNK_LIBRO = 350
 
 MIN_TEXTO_POR_PAGINA = 20
+RUTA_BASE = "/data/libros"

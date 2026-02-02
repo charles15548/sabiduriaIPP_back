@@ -3,7 +3,7 @@ from script.controllers.personas import login
 from fastapi import FastAPI, HTTPException,Form,File,Body,UploadFile
 from fastapi.responses import JSONResponse
 from script.ml.embeddings.subir_libro import procesarSubida
-from script.controllers.libro import eliminar_libro, listar_libros
+from script.controllers.libro import eliminar_libro, listar_libros,descargar_libro_por_id
 from script.ml.response import response_stream
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
@@ -88,7 +88,10 @@ def obtener_libros():
             status_code=500,
             detail="Error al obtener la lista de libros"
         )
-
+    
+@app.get("/libros/{id}/descargar")
+def descargar(id: int):
+    return descargar_libro_por_id(id)
 
 @app.post("/subir-libro")
 async def subir_documento(

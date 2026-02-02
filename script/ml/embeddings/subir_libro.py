@@ -4,11 +4,12 @@ from fastapi import UploadFile
 from script.controllers.libro import subirLibro
 from script.controllers.libro import formatear_listado_libros
 from docx import Document
+import shutil
 import os
 import fitz
 import re
 from fastapi import HTTPException
-from script.ml.variables_globales import MIN_TEXTO_POR_PAGINA,MODELO_CAPITULO
+from script.ml.variables_globales import MIN_TEXTO_POR_PAGINA,MODELO_CAPITULO,RUTA_BASE
 
 # async def extraer_texto(archivo: UploadFile) -> str:
 #     filename = archivo.filename.lower()
@@ -175,45 +176,100 @@ Devuelve ÚNICAMENTE un JSON válido con esta estructura exacta:
         print("❌ Error parseando JSON de capítulos")
         return []
 
+ 
+
+def guardar_libro_en_disk(
+        nombre_libro: str,
+        archivo: UploadFile,
+        extension: str
+) -> str:
+    try:
+        os.makedirs(RUTA_BASE, exist_ok=True)
+        nombre_limpio = nombre_libro.replace(" ", "_")
 
 
+        ruta_final = os.path.join(
+            RUTA_BASE,
+            f"{nombre_limpio}{extension}"
+        )
+
+        with open(ruta_final, "wb") as buffer:
+            shutil.copyfileobj(archivo.file,buffer)
+        archivo.file.seek(0)
+
+        return ruta_final
+
+
+
+    except Exception as e:
+        print(e)
+        raise HTTPException(
+            status_code=500,
+            detail="Error al guardar el libro en el disk ❌"
+        )
 
 
 def procesarSubida(nombreLibro, contenido,fecha, autor, tipo, tags):
 
-    extension = os.path.splitext(contenido.filename)[1].lower()
+
+    extension = os.path.splitext(contenido.filename)[1]
+    url_doc = None
+
+    try:
+        
+        url_doc = guardar_libro_en_disk(
+            nombreLibro, contenido,extension
+        )
+        print(f"Libro guardado en: {url_doc}")
+
+        
 
 
-    if extension == ".pdf":
-        paginas = extraer_paginas_pdf(contenido)
-    elif extension == ".docx":
-        paginas = extraer_paginas_word(contenido)
-    else:
-        raise HTTPException(status_code=400, detail="Formato no soportado")
-    
-    texto_total = " ".join(p["texto"] for p in paginas)
-    if contar_texto(texto_total) < 200:
+        if extension == ".pdf":
+            paginas = extraer_paginas_pdf(contenido)
+        elif extension == ".docx":
+            paginas = extraer_paginas_word(contenido)
+        else:
+            raise HTTPException(status_code=400, detail="Formato no soportado")
+        
+        texto_total = " ".join(p["texto"] for p in paginas)
+        if contar_texto(texto_total) < 200:
+
+            raise HTTPException(
+                status_code=400,
+                detail="No se pudo leer el libro. Parece que no contiene texto legible."
+            )
+
+        capitulos = detectar_capitulos(paginas)
+
+        print(f"""
+            ==========
+            {capitulos}
+            ==========""")
+
+        for p in paginas:
+            p["texto_rag"] = limpiar_texto_rag(p["texto"])
+
+
+
+        subirLibro(
+            nombreLibro,
+            paginas,
+            capitulos,fecha, autor, tipo, tags,
+            url_doc
+        )
+        return {"message": f"Libro {nombreLibro} insertado correctamente ✅"}
+    except Exception as e:
+        if url_doc and os.path.exists(url_doc):
+            os.remove(url_doc)
+            print("Archivo eliminado correctamente")
+        print(e)
+        if isinstance(e, HTTPException):
+            raise e
 
         raise HTTPException(
-            status_code=400,
-            detail="No se pudo leer el libro. Parece que no contiene texto legible."
+            status_code=500,
+            detail="Error al procesar la subida del libro ❌"
         )
 
-    capitulos = detectar_capitulos(paginas)
 
-    print(f"""
-          ==========
-          {capitulos}
-          ==========""")
-
-    for p in paginas:
-        p["texto_rag"] = limpiar_texto_rag(p["texto"])
-
-
-
-    subirLibro(
-        nombreLibro,
-        paginas,
-        capitulos,fecha, autor, tipo, tags
-    )
-    return {"message": f"Libro {nombreLibro} insertado correctamente ✅"}
