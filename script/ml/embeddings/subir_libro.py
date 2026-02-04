@@ -10,32 +10,7 @@ import fitz
 import re
 from fastapi import HTTPException
 from script.ml.variables_globales import MIN_TEXTO_POR_PAGINA,MODELO_CAPITULO,RUTA_BASE
-
-# async def extraer_texto(archivo: UploadFile) -> str:
-#     filename = archivo.filename.lower()
-
-#     contenido = await archivo.read()
-
-#     # --- PDF ---
-#     if filename.endswith(".pdf"):
-        
-#         reader = PdfReader(BytesIO(contenido))
-#         texto_total = []
-#         for page in reader.pages:
-#             texto = page.extract_text()
-#             if texto:
-#                 texto_total.append(texto)
-
-#         return "\n".join(texto_total)
-#     elif filename.endswith(".docx"):
-#         doc = Document(BytesIO(contenido))
-#         texto_total = []
-#         for para in doc.paragraphs:
-#             if para.text.strip():
-#                 texto_total.append(para.text)
-#         return "\n".join(texto_total)
-#     else:
-#         raise ValueError("Formato de archivo no soportado. Usa PDF o DOCX.")
+from script.ml.gpt.prompt import PROMPT_CAPITULOS
 
 def limpiar_texto_rag(texto: str) -> str:
     # Eliminar NUL explícitamente (CRÍTICO)
@@ -128,33 +103,7 @@ def detectar_capitulos(paginas):
     
     paginas_recortadas = paginas[:30]
 
-    prompt = """
-Eres un analizador de libros.
-
-Recibirás una lista de páginas de un libro.
-Cada página tiene:
-- numero de página
-- texto completo
-
-Tu tarea es detectar los TÍTULOS DE CAPÍTULOS reales del libro.
-
-Reglas IMPORTANTES:
-- Solo detecta capítulos reales (Capítulo, Parte, Sección principal)
-- No detectes subtítulos menores
-- No inventes capítulos
-- Mantén el orden original del libro
-- Si no hay capítulos claros, devuelve una lista vacía
-
-Devuelve ÚNICAMENTE un JSON válido con esta estructura exacta:
-
-{
-  "capitulos": [
-    {
-      "titulo": "string"
-    }
-  ]
-}
-"""
+    prompt = PROMPT_CAPITULOS
 
     response = client.chat.completions.create(
         model=MODELO_CAPITULO, 
