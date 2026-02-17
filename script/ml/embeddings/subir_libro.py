@@ -10,7 +10,7 @@ import fitz
 import re
 from fastapi import HTTPException
 from script.ml.variables_globales import MIN_TEXTO_POR_PAGINA,MODELO_CAPITULO,RUTA_BASE
-from script.ml.gpt.prompt import PROMPT_CAPITULOS
+from script.ml.gpt.prompt import PROMPT_CAPITULOS, PROMPT_CAP_REALES, PROMPT_DETECTAR_CAP_Y_PAG
 
 def limpiar_texto_rag(texto: str) -> str:
     # Eliminar NUL explícitamente (CRÍTICO)
@@ -125,6 +125,21 @@ def detectar_capitulos(paginas):
         print("❌ Error parseando JSON de capítulos")
         return []
 
+
+# def detectarCapYPag(paginas):
+#     paginas_recortadas = paginas[:25]
+
+#     response = client.chat.completions.create(
+#         model= MODELO_CAPITULO,
+#         messages=[
+#             {"role":"system","content": PROMPT_DETECTAR_CAP_Y_PAG},
+#             {
+#                 "role": "user",
+#                 "content": 
+
+#             }
+#         ]
+#     )
  
 
 def guardar_libro_en_disk(

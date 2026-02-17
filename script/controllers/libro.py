@@ -173,6 +173,7 @@ def obtener_listado_libros_con_capitulos():
                         l.autor,
                         l.tipo,
                         l.tags,
+                        l.url_doc,
                         c.titulo AS capitulo
                     FROM libros l
                     LEFT JOIN capitulos c ON c.id_libro = l.id
@@ -210,7 +211,8 @@ def formatear_listado_libros(libros_dict):
         salida.append(
              f"Autor: {libro['autor']} | "
             f"Fecha: {libro['fecha']} | "
-            f"Tipo: {libro['tipo']}"
+            f"Tipo: {libro['tipo']}  "
+          
         )
         if libro['capitulos']:
             for  cap in libro['capitulos']:

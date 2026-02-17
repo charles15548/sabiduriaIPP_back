@@ -40,7 +40,7 @@ def login(correo, contrasena):
         user = result.fetchone()
         if user:
             if user.contrasena == contrasena:
-                exp = datetime.datetime.utcnow() + datetime.timedelta(hours=3)
+                exp = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
                 token = jwt.encode(
                     {"id": user.id, "correo": user.correo, "exp":exp},
                     SECRET_KEY,
