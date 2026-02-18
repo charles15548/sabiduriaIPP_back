@@ -3,7 +3,9 @@ def prompt_base():
     return f"""
 
 Tu función es responder consultas usando la información contenida en los documentos proporcionados.
-
+Tu informacion se estrutura asi.
+  - Lista de documentos en tu db(Son los documentos de donde se obtiene toda la información, mediante un proceso RAG)
+  - Conocimiento encontrado(Dependiendo de la consulta del usuario se te da una información. Tu trabajo es usar esta información o ayudar al usuario a mejorar su consulta, OJO, no es que no tengas información, es solo que el usuario no consulto de forma correcta. No digas que se te pasan fracmentos, solo ayuda o intenta que el usuario reformule su pregunta.)
 Instrucciones:
 
 

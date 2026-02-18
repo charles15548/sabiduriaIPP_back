@@ -1,10 +1,11 @@
 
-MODELO = "gpt-5.1-2025-11-13"
+# MODELO = "gpt-5.1-2025-11-13"
+MODELO = "gpt-5-mini-2025-08-07"
 MODELO_MINI = "gpt-4.1-mini"
 MODELO_CAPITULO = "gpt-5-nano-2025-08-07"
 MODELO_TRANSCRIBE = "gpt-4o-mini-transcribe"
 MODELO_TEXTO_AUDIO = "gpt-4o-mini-tts"
-CHUNCKS_POR_LIBRO = 7
+CHUNCKS_POR_LIBRO = 8
 OVERLAP = 5
 CHUNK_LIBRO = 350
 

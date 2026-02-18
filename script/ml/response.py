@@ -26,7 +26,7 @@ def response_stream(pregunta_usuario, historial):
 
     libros_con_capitulos = obtener_listado_libros_con_capitulos()
     archivos_existentes = formatear_listado_libros(libros_con_capitulos)
-    print(archivos_existentes)
+    # print(archivos_existentes)
     
 
     if chunks == []:
